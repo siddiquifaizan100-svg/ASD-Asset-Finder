@@ -12,182 +12,270 @@
   <link rel="apple-touch-icon" href="ASD%20MEP%20Asset%20Finder%20App%20Icon.png">
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    <style>
+  * {
+    box-sizing: border-box;
+  }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f7fb;
-      color: #1f2937;
-    }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f3f6fa;
+    color: #172033;
+  }
 
+  .header {
+    background: linear-gradient(135deg, #0d3155, #174d7d);
+    color: white;
+    padding: 20px 18px 24px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+  }
+
+  .brand-row {
+    max-width: 700px;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+  }
+
+  .logo-box {
+    width: 105px;
+    height: 72px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  }
+
+  .logo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .header-title {
+    flex: 1;
+    text-align: center;
+  }
+
+  .header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+  }
+
+  .header p {
+    margin: 7px 0 0;
+    font-size: 16px;
+    opacity: 0.9;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 28px auto;
+    padding: 0 16px;
+  }
+
+  .box {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(25,45,75,0.08);
+    border: 1px solid #e8edf4;
+  }
+
+  .login-title {
+    text-align: center;
+    color: #123f69;
+    margin: 0 0 8px;
+  }
+
+  .login-subtitle {
+    text-align: center;
+    color: #64748b;
+    margin: 0 0 25px;
+  }
+
+  label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #172033;
+  }
+
+  select,
+  input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 19px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 16px;
+    background: white;
+    outline: none;
+    transition: 0.2s;
+  }
+
+  select:focus,
+  input:focus {
+    border-color: #174d7d;
+    box-shadow: 0 0 0 3px rgba(23,77,125,0.10);
+  }
+
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: #123f69;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #0d3155;
+  }
+
+  .app-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    background: white;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #e5eaf0;
+  }
+
+  .logged-user {
+    font-size: 13px;
+    color: #64748b;
+    overflow-wrap: anywhere;
+  }
+
+  .logout-btn {
+    width: auto;
+    min-width: 80px;
+    padding: 9px 14px;
+    background: #fff;
+    color: #123f69;
+    border: 1px solid #cbd5e1;
+  }
+
+  #loginMessage,
+  #message {
+    text-align: center;
+    margin: 18px 0;
+    font-weight: 700;
+  }
+
+  .error {
+    color: #b91c1c;
+  }
+
+  .success {
+    color: #15803d;
+  }
+
+  .asset-card {
+    background: white;
+    margin-top: 15px;
+    padding: 20px;
+    border-radius: 13px;
+    border-left: 5px solid #174d7d;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.07);
+  }
+
+  .asset-card h3 {
+    margin: 0 0 14px;
+    color: #123f69;
+    font-size: 19px;
+  }
+
+  .asset-card p {
+    margin: 8px 0;
+    line-height: 1.5;
+  }
+
+  .footer {
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    margin: 32px 0;
+  }
+
+  #appSection,
+  #loginSection {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
     .header {
-      background: #123a63;
-      color: white;
-      padding: 25px 20px;
-      text-align: center;
+      padding: 16px 12px 20px;
+    }
+
+    .brand-row {
+      gap: 8px;
+    }
+
+    .logo-box {
+      width: 75px;
+      height: 58px;
+      padding: 5px;
     }
 
     .header h1 {
-      margin: 0;
-      font-size: 28px;
+      font-size: 23px;
     }
 
     .header p {
-      margin: 7px 0 0;
-      opacity: 0.85;
+      font-size: 14px;
     }
 
     .container {
-      max-width: 700px;
-      margin: 30px auto;
-      padding: 0 16px;
+      margin-top: 18px;
     }
 
     .box {
-      background: white;
-      padding: 24px;
-      border-radius: 14px;
-      box-shadow: 0 3px 15px rgba(0,0,0,0.08);
-    }
-
-    .login-title {
-      text-align: center;
-      color: #123a63;
-      margin-top: 0;
-      margin-bottom: 8px;
-    }
-
-    .login-subtitle {
-      text-align: center;
-      color: #64748b;
-      margin-top: 0;
-      margin-bottom: 24px;
-    }
-
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 7px;
-    }
-
-    select,
-    input {
-      width: 100%;
-      padding: 13px;
-      margin-bottom: 18px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 16px;
-      background: white;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 8px;
-      background: #123a63;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0d2d4d;
-    }
-
-    .logout-btn {
-      width: auto;
-      padding: 9px 16px;
-      background: #ffffff;
-      color: #123a63;
-      border: 1px solid #cbd5e1;
-    }
-
-    .app-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 15px;
-    }
-
-    .logged-user {
-      font-size: 13px;
-      color: #64748b;
-      overflow-wrap: anywhere;
-    }
-
-    #loginMessage,
-    #message {
-      text-align: center;
-      margin: 18px 0;
-      font-weight: bold;
-    }
-
-    .error {
-      color: #b91c1c;
-    }
-
-    .success {
-      color: #166534;
-    }
-
-    .asset-card {
-      background: white;
-      margin-top: 16px;
       padding: 20px;
-      border-radius: 12px;
-      border-left: 5px solid #123a63;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
-
-    .asset-card h3 {
-      margin: 0 0 14px;
-      color: #123a63;
-    }
-
-    .asset-card p {
-      margin: 8px 0;
-      line-height: 1.5;
-    }
-
-    .footer {
-      text-align: center;
-      color: #64748b;
-      font-size: 13px;
-      margin: 35px 0;
-    }
-
-    #appSection {
-      display: none;
-    }
-
-    #loginSection {
-      display: none;
-    }
-
-    @media (max-width: 600px) {
-      .header h1 {
-        font-size: 24px;
-      }
-
-      .container {
-        margin-top: 20px;
-      }
-    }
-  </style>
+  }
+</style>
+      </style>
 </head>
 
 <body>
 
   <div class="header">
-    <h1>ASD Asset Finder</h1>
-    <p>American School of Doha</p>
+   <div class="header">
+
+  <div class="brand-row">
+
+    <div class="logo-box">
+      <img src="ASD%20LOGO.jpg" alt="American School of Doha">
+    </div>
+
+    <div class="header-title">
+      <h1>ASD Asset Finder</h1>
+      <p>American School of Doha</p>
+    </div>
+
+    <div class="logo-box">
+      <img src="acciona%20logo%20new.png" alt="Acciona">
+    </div>
+
+  </div>
+
+</div>
   </div>
 
   <div class="container">
