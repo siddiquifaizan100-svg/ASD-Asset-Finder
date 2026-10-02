@@ -184,15 +184,19 @@ const SUPABASE_KEY = "sb_publishable_YWvWjEPsrc5gzQk-52KMyw_vatHAgTS";
 async function loadCategories() {
 
   const categorySelect = document.getElementById("category");
+  const message = document.getElementById("message");
 
   try {
 
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/assets?select=category&order=category`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_asset_categories`,
       {
+        method: "POST",
         headers: {
-          "apikey": SUPABASE_KEY
-        }
+          "apikey": SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+        body: "{}"
       }
     );
 
@@ -202,20 +206,12 @@ async function loadCategories() {
 
     const data = await response.json();
 
-    const categories = [
-      ...new Set(
-        data
-          .map(item => item.category)
-          .filter(Boolean)
-      )
-    ];
-
-    categories.forEach(category => {
+    data.forEach(item => {
 
       const option = document.createElement("option");
 
-      option.value = category;
-      option.textContent = category;
+      option.value = item.category;
+      option.textContent = item.category;
 
       categorySelect.appendChild(option);
 
@@ -223,11 +219,10 @@ async function loadCategories() {
 
   } catch (error) {
 
-    document.getElementById("message").textContent =
-      "Unable to connect to asset database.";
+    message.textContent =
+      "Unable to load categories.";
 
   }
-
 }
 
 
@@ -272,8 +267,8 @@ async function searchAssets() {
       `${SUPABASE_URL}/rest/v1/assets` +
       `?select=id,category,room_number,asset_type,result_1,result_2,result_3` +
       `&category=eq.${encodeURIComponent(category)}` +
-      `&room_number=ilike.${encodeURIComponent(room)}`;
-
+      `&room_number=ilike.${encodeURIComponent(room)}` +
+`&order=asset_type.asc`;
     const response = await fetch(url, {
       headers: {
         "apikey": SUPABASE_KEY
