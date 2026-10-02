@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>ASD Asset Finder</title>
+
   <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#123a63">
-<meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#123a63">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="ASD%20MEP%20Asset%20Finder%20App%20Icon.png">
 
   <style>
@@ -24,7 +26,7 @@
     .header {
       background: #123a63;
       color: white;
-      padding: 28px 20px;
+      padding: 25px 20px;
       text-align: center;
     }
 
@@ -44,11 +46,25 @@
       padding: 0 16px;
     }
 
-    .search-box {
+    .box {
       background: white;
       padding: 24px;
       border-radius: 14px;
       box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+
+    .login-title {
+      text-align: center;
+      color: #123a63;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: #64748b;
+      margin-top: 0;
+      margin-bottom: 24px;
     }
 
     label {
@@ -84,10 +100,41 @@
       background: #0d2d4d;
     }
 
+    .logout-btn {
+      width: auto;
+      padding: 9px 16px;
+      background: #ffffff;
+      color: #123a63;
+      border: 1px solid #cbd5e1;
+    }
+
+    .app-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .logged-user {
+      font-size: 13px;
+      color: #64748b;
+      overflow-wrap: anywhere;
+    }
+
+    #loginMessage,
     #message {
       text-align: center;
-      margin: 22px 0;
+      margin: 18px 0;
       font-weight: bold;
+    }
+
+    .error {
+      color: #b91c1c;
+    }
+
+    .success {
+      color: #166534;
     }
 
     .asset-card {
@@ -116,6 +163,14 @@
       margin: 35px 0;
     }
 
+    #appSection {
+      display: none;
+    }
+
+    #loginSection {
+      display: none;
+    }
+
     @media (max-width: 600px) {
       .header h1 {
         font-size: 24px;
@@ -137,32 +192,87 @@
 
   <div class="container">
 
-    <div class="search-box">
+    <!-- LOGIN -->
+    <div id="loginSection">
 
-      <label for="category">Category</label>
+      <div class="box">
 
-      <select id="category">
-        <option value="">Select Category</option>
-      </select>
+        <h2 class="login-title">Authorized Access</h2>
 
-      <label for="room">Room Number</label>
+        <p class="login-subtitle">
+          Sign in to access ASD MEP assets
+        </p>
 
-      <input
-        id="room"
-        type="text"
-        placeholder="Enter room number"
-        autocomplete="off"
-      >
+        <label for="email">Email Address</label>
 
-      <button onclick="searchAssets()">
-        Search Asset
-      </button>
+        <input
+          id="email"
+          type="email"
+          placeholder="Enter your email"
+          autocomplete="username"
+        >
+
+        <label for="password">Password</label>
+
+        <input
+          id="password"
+          type="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+        >
+
+        <button onclick="login()">
+          Sign In
+        </button>
+
+        <div id="loginMessage"></div>
+
+      </div>
 
     </div>
 
-    <div id="message"></div>
 
-    <div id="results"></div>
+    <!-- ASSET FINDER -->
+    <div id="appSection">
+
+      <div class="app-toolbar">
+
+        <div id="loggedUser" class="logged-user"></div>
+
+        <button class="logout-btn" onclick="logout()">
+          Logout
+        </button>
+
+      </div>
+
+      <div class="box">
+
+        <label for="category">Category</label>
+
+        <select id="category">
+          <option value="">Select Category</option>
+        </select>
+
+        <label for="room">Room Number</label>
+
+        <input
+          id="room"
+          type="text"
+          placeholder="Enter room number"
+          autocomplete="off"
+        >
+
+        <button onclick="searchAssets()">
+          Search Asset
+        </button>
+
+      </div>
+
+      <div id="message"></div>
+
+      <div id="results"></div>
+
+    </div>
 
     <div class="footer">
       ASD MEP Asset Management
@@ -170,34 +280,356 @@
 
   </div>
 
+
 <script>
 
 const SUPABASE_URL =
   "https://vywbhpdfnlprvfrmojxy.supabase.co";
 
 /*
-  NEXT STEP:
-  We will put your Supabase PUBLISHABLE KEY below.
-
-  Never put the service_role / secret key here.
+  IMPORTANT:
+  Replace the text below with your existing
+  Supabase PUBLISHABLE key only.
+  Do NOT use service_role or secret key.
 */
 
-const SUPABASE_KEY = "sb_publishable_YWvWjEPsrc5gzQk-52KMyw_vatHAgTS";
+const SUPABASE_KEY =
+  "sb_publishable_YWvWjEPsrc5gzQk-52KMyw_vatHAgTS";
 
 
-async function loadCategories() {
+function getAccessToken() {
+  return localStorage.getItem("asd_access_token");
+}
 
-  const categorySelect = document.getElementById("category");
-  const message = document.getElementById("message");
+
+function getRefreshToken() {
+  return localStorage.getItem("asd_refresh_token");
+}
+
+
+function saveSession(session) {
+
+  localStorage.setItem(
+    "asd_access_token",
+    session.access_token
+  );
+
+  localStorage.setItem(
+    "asd_refresh_token",
+    session.refresh_token
+  );
+
+  if (session.user && session.user.email) {
+    localStorage.setItem(
+      "asd_user_email",
+      session.user.email
+    );
+  }
+}
+
+
+function clearSession() {
+
+  localStorage.removeItem("asd_access_token");
+  localStorage.removeItem("asd_refresh_token");
+  localStorage.removeItem("asd_user_email");
+}
+
+
+async function login() {
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const loginMessage =
+    document.getElementById("loginMessage");
+
+  loginMessage.className = "";
+  loginMessage.textContent = "";
+
+  if (!email || !password) {
+
+    loginMessage.className = "error";
+    loginMessage.textContent =
+      "Please enter email and password.";
+
+    return;
+  }
+
+  loginMessage.textContent = "Signing in...";
 
   try {
 
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/rpc/get_asset_categories`,
+      `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
       {
         method: "POST",
         headers: {
           "apikey": SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error_description ||
+        data.msg ||
+        data.message ||
+        "Invalid email or password."
+      );
+    }
+
+    saveSession(data);
+
+    showApp();
+
+  } catch (error) {
+
+    loginMessage.className = "error";
+    loginMessage.textContent =
+      error.message || "Unable to sign in.";
+
+  }
+}
+
+
+async function refreshSession() {
+
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    return false;
+  }
+
+  try {
+
+    const response = await fetch(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+      {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          refresh_token: refreshToken
+        })
+      }
+    );
+
+    if (!response.ok) {
+      clearSession();
+      return false;
+    }
+
+    const data = await response.json();
+
+    saveSession(data);
+
+    return true;
+
+  } catch (error) {
+
+    clearSession();
+    return false;
+
+  }
+}
+
+
+async function validateSession() {
+
+  let accessToken = getAccessToken();
+
+  if (!accessToken) {
+    return false;
+  }
+
+  try {
+
+    let response = await fetch(
+      `${SUPABASE_URL}/auth/v1/user`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    if (response.ok) {
+
+      const user = await response.json();
+
+      if (user.email) {
+        localStorage.setItem(
+          "asd_user_email",
+          user.email
+        );
+      }
+
+      return true;
+    }
+
+    const refreshed = await refreshSession();
+
+    if (!refreshed) {
+      return false;
+    }
+
+    accessToken = getAccessToken();
+
+    response = await fetch(
+      `${SUPABASE_URL}/auth/v1/user`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    return response.ok;
+
+  } catch (error) {
+
+    return false;
+
+  }
+}
+
+
+function showLogin() {
+
+  document.getElementById("loginSection").style.display =
+    "block";
+
+  document.getElementById("appSection").style.display =
+    "none";
+}
+
+
+async function showApp() {
+
+  document.getElementById("loginSection").style.display =
+    "none";
+
+  document.getElementById("appSection").style.display =
+    "block";
+
+  const email =
+    localStorage.getItem("asd_user_email") || "";
+
+  document.getElementById("loggedUser").textContent =
+    email ? "Signed in: " + email : "";
+
+  await loadCategories();
+}
+
+
+async function logout() {
+
+  const accessToken = getAccessToken();
+
+  if (accessToken) {
+
+    try {
+
+      await fetch(
+        `${SUPABASE_URL}/auth/v1/logout`,
+        {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization":
+              `Bearer ${accessToken}`
+          }
+        }
+      );
+
+    } catch (error) {
+      // Local logout will still continue.
+    }
+  }
+
+  clearSession();
+
+  document.getElementById("results").innerHTML = "";
+  document.getElementById("message").textContent = "";
+
+  showLogin();
+}
+
+
+async function authorizedFetch(url, options = {}) {
+
+  let accessToken = getAccessToken();
+
+  if (!accessToken) {
+    throw new Error("Please sign in again.");
+  }
+
+  options.headers = {
+    ...(options.headers || {}),
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${accessToken}`
+  };
+
+  let response = await fetch(url, options);
+
+  if (response.status === 401) {
+
+    const refreshed = await refreshSession();
+
+    if (!refreshed) {
+
+      clearSession();
+      showLogin();
+
+      throw new Error("Session expired. Please sign in again.");
+    }
+
+    accessToken = getAccessToken();
+
+    options.headers["Authorization"] =
+      `Bearer ${accessToken}`;
+
+    response = await fetch(url, options);
+  }
+
+  return response;
+}
+
+
+async function loadCategories() {
+
+  const categorySelect =
+    document.getElementById("category");
+
+  const message =
+    document.getElementById("message");
+
+  categorySelect.innerHTML =
+    '<option value="">Select Category</option>';
+
+  try {
+
+    const response = await authorizedFetch(
+      `${SUPABASE_URL}/rest/v1/rpc/get_asset_categories`,
+      {
+        method: "POST",
+        headers: {
           "Content-Type": "application/json"
         },
         body: "{}"
@@ -205,14 +637,15 @@ async function loadCategories() {
     );
 
     if (!response.ok) {
-      throw new Error("Unable to load categories");
+      throw new Error("Unable to load categories.");
     }
 
     const data = await response.json();
 
     data.forEach(item => {
 
-      const option = document.createElement("option");
+      const option =
+        document.createElement("option");
 
       option.value = item.category;
       option.textContent = item.category;
@@ -223,8 +656,8 @@ async function loadCategories() {
 
   } catch (error) {
 
-    message.textContent =
-      "Unable to load categories.";
+    message.className = "error";
+    message.textContent = error.message;
 
   }
 }
@@ -245,10 +678,12 @@ async function searchAssets() {
     document.getElementById("results");
 
   results.innerHTML = "";
+  message.className = "";
   message.textContent = "";
 
   if (!category) {
 
+    message.className = "error";
     message.textContent =
       "Please select a category.";
 
@@ -257,6 +692,7 @@ async function searchAssets() {
 
   if (!room) {
 
+    message.className = "error";
     message.textContent =
       "Please enter a room number.";
 
@@ -272,18 +708,17 @@ async function searchAssets() {
       `?select=id,category,room_number,asset_type,result_1,result_2,result_3` +
       `&category=eq.${encodeURIComponent(category)}` +
       `&room_number=ilike.${encodeURIComponent(room)}` +
-`&order=asset_type.asc`;
-    const response = await fetch(url, {
-      headers: {
-        "apikey": SUPABASE_KEY
-      }
-    });
+      `&order=asset_type.asc`;
+
+    const response =
+      await authorizedFetch(url);
 
     if (!response.ok) {
-      throw new Error("Search failed");
+      throw new Error("Unable to search assets.");
     }
 
-    const assets = await response.json();
+    const assets =
+      await response.json();
 
     if (assets.length === 0) {
 
@@ -293,6 +728,7 @@ async function searchAssets() {
       return;
     }
 
+    message.className = "success";
     message.textContent =
       `${assets.length} asset(s) found`;
 
@@ -311,10 +747,29 @@ async function searchAssets() {
 
       card.appendChild(title);
 
-      addField(card, "Room Number", asset.room_number);
-      addField(card, "Result 1", asset.result_1);
-      addField(card, "Result 2", asset.result_2);
-      addField(card, "Result 3", asset.result_3);
+      addField(
+        card,
+        "Room Number",
+        asset.room_number
+      );
+
+      addField(
+        card,
+        "Result 1",
+        asset.result_1
+      );
+
+      addField(
+        card,
+        "Result 2",
+        asset.result_2
+      );
+
+      addField(
+        card,
+        "Result 3",
+        asset.result_3
+      );
 
       results.appendChild(card);
 
@@ -322,11 +777,12 @@ async function searchAssets() {
 
   } catch (error) {
 
+    message.className = "error";
     message.textContent =
-      "Unable to search assets. Please try again.";
+      error.message ||
+      "Unable to search assets.";
 
   }
-
 }
 
 
@@ -349,6 +805,7 @@ function addField(card, label, value) {
   strong.textContent = label + ": ";
 
   row.appendChild(strong);
+
   row.appendChild(
     document.createTextNode(value)
   );
@@ -359,16 +816,47 @@ function addField(card, label, value) {
 
 document
   .getElementById("room")
-  .addEventListener("keydown", function(event) {
+  .addEventListener(
+    "keydown",
+    function(event) {
 
-    if (event.key === "Enter") {
-      searchAssets();
+      if (event.key === "Enter") {
+        searchAssets();
+      }
+
     }
+  );
 
-  });
+
+document
+  .getElementById("password")
+  .addEventListener(
+    "keydown",
+    function(event) {
+
+      if (event.key === "Enter") {
+        login();
+      }
+
+    }
+  );
 
 
-loadCategories();
+async function initializeApp() {
+
+  const valid =
+    await validateSession();
+
+  if (valid) {
+    await showApp();
+  } else {
+    clearSession();
+    showLogin();
+  }
+}
+
+
+initializeApp();
 
 </script>
 
