@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASD Asset Finder</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    .header {
+      background: #123a63;
+      color: white;
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .header p {
+      margin: 7px 0 0;
+      opacity: 0.85;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 30px auto;
+      padding: 0 16px;
+    }
+
+    .search-box {
+      background: white;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 18px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: #123a63;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0d2d4d;
+    }
+
+    #message {
+      text-align: center;
+      margin: 22px 0;
+      font-weight: bold;
+    }
+
+    .asset-card {
+      background: white;
+      margin-top: 16px;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 5px solid #123a63;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .asset-card h3 {
+      margin: 0 0 14px;
+      color: #123a63;
+    }
+
+    .asset-card p {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    .footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      margin: 35px 0;
+    }
+
+    @media (max-width: 600px) {
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .container {
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>ASD Asset Finder</h1>
+    <p>American School of Doha</p>
+  </div>
+
+  <div class="container">
+
+    <div class="search-box">
+
+      <label for="category">Category</label>
+
+      <select id="category">
+        <option value="">Select Category</option>
+      </select>
+
+      <label for="room">Room Number</label>
+
+      <input
+        id="room"
+        type="text"
+        placeholder="Enter room number"
+        autocomplete="off"
+      >
+
+      <button onclick="searchAssets()">
+        Search Asset
+      </button>
+
+    </div>
+
+    <div id="message"></div>
+
+    <div id="results"></div>
+
+    <div class="footer">
+      ASD MEP Asset Management
+    </div>
+
+  </div>
+
+<script>
+
+const SUPABASE_URL =
+  "https://vywbhpdfnlprvfrmojxy.supabase.co";
+
+/*
+  NEXT STEP:
+  We will put your Supabase PUBLISHABLE KEY below.
+
+  Never put the service_role / secret key here.
+*/
+
+const SUPABASE_KEY = "sb_publishable_YWvWjEPsrc5gzQk-52KMyw_vatHAgTS";
+
+
+async function loadCategories() {
+
+  const categorySelect = document.getElementById("category");
+
+  try {
+
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/assets?select=category&order=category`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to load categories");
+    }
+
+    const data = await response.json();
+
+    const categories = [
+      ...new Set(
+        data
+          .map(item => item.category)
+          .filter(Boolean)
+      )
+    ];
+
+    categories.forEach(category => {
+
+      const option = document.createElement("option");
+
+      option.value = category;
+      option.textContent = category;
+
+      categorySelect.appendChild(option);
+
+    });
+
+  } catch (error) {
+
+    document.getElementById("message").textContent =
+      "Unable to connect to asset database.";
+
+  }
+
+}
+
+
+async function searchAssets() {
+
+  const category =
+    document.getElementById("category").value;
+
+  const room =
+    document.getElementById("room").value.trim();
+
+  const message =
+    document.getElementById("message");
+
+  const results =
+    document.getElementById("results");
+
+  results.innerHTML = "";
+  message.textContent = "";
+
+  if (!category) {
+
+    message.textContent =
+      "Please select a category.";
+
+    return;
+  }
+
+  if (!room) {
+
+    message.textContent =
+      "Please enter a room number.";
+
+    return;
+  }
+
+  message.textContent = "Searching...";
+
+  try {
+
+    const url =
+      `${SUPABASE_URL}/rest/v1/assets` +
+      `?select=id,category,room_number,asset_type,result_1,result_2,result_3` +
+      `&category=eq.${encodeURIComponent(category)}` +
+      `&room_number=ilike.${encodeURIComponent(room)}`;
+
+    const response = await fetch(url, {
+      headers: {
+        "apikey": SUPABASE_KEY
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Search failed");
+    }
+
+    const assets = await response.json();
+
+    if (assets.length === 0) {
+
+      message.textContent =
+        "No assets found for this room and category.";
+
+      return;
+    }
+
+    message.textContent =
+      `${assets.length} asset(s) found`;
+
+    assets.forEach(asset => {
+
+      const card =
+        document.createElement("div");
+
+      card.className = "asset-card";
+
+      const title =
+        document.createElement("h3");
+
+      title.textContent =
+        asset.asset_type || "Asset";
+
+      card.appendChild(title);
+
+      addField(card, "Room Number", asset.room_number);
+      addField(card, "Result 1", asset.result_1);
+      addField(card, "Result 2", asset.result_2);
+      addField(card, "Result 3", asset.result_3);
+
+      results.appendChild(card);
+
+    });
+
+  } catch (error) {
+
+    message.textContent =
+      "Unable to search assets. Please try again.";
+
+  }
+
+}
+
+
+function addField(card, label, value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    String(value).trim() === ""
+  ) {
+    return;
+  }
+
+  const row =
+    document.createElement("p");
+
+  const strong =
+    document.createElement("strong");
+
+  strong.textContent = label + ": ";
+
+  row.appendChild(strong);
+  row.appendChild(
+    document.createTextNode(value)
+  );
+
+  card.appendChild(row);
+}
+
+
+document
+  .getElementById("room")
+  .addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+      searchAssets();
+    }
+
+  });
+
+
+loadCategories();
+
+</script>
+
+</body>
+</html>
