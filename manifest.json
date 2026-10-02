@@ -7,5 +7,19 @@
   "display": "standalone",
   "background_color": "#f4f7fb",
   "theme_color": "#123a63",
-  "orientation": "portrait-primary"
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "ASD%20MEP%20Asset%20Finder%20App%20Icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "ASD%20MEP%20Asset%20Finder%20App%20Icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }
