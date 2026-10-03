@@ -213,10 +213,11 @@
     margin: 32px 0;
   }
 
-  #appSection,
-  #loginSection {
-    display: none;
-  }
+ #appSection,
+#loginSection,
+#setPasswordSection {
+  display: none;
+}
 
   @media (max-width: 600px) {
     .header {
@@ -318,7 +319,40 @@
       </div>
 
     </div>
+<!-- INVITED USER - SET PASSWORD -->
+<div id="setPasswordSection" class="container" style="display:none;">
+  <div class="box">
 
+    <h2 class="login-title">Set Your Password</h2>
+
+    <p class="login-subtitle">
+      Create your password to access ASD Asset Finder.
+    </p>
+
+    <label for="newPassword">New Password</label>
+    <input
+      type="password"
+      id="newPassword"
+      placeholder="Enter new password"
+      autocomplete="new-password"
+    >
+
+    <label for="confirmPassword">Confirm Password</label>
+    <input
+      type="password"
+      id="confirmPassword"
+      placeholder="Confirm new password"
+      autocomplete="new-password"
+    >
+
+    <button type="button" onclick="setInvitedUserPassword()">
+      Set Password
+    </button>
+
+    <div id="passwordMessage"></div>
+
+  </div>
+</div>
 
     <!-- ASSET FINDER -->
     <div id="appSection">
@@ -490,7 +524,85 @@ async function login() {
 
   }
 }
+async function setInvitedUserPassword() {
+  const newPassword = document.getElementById("newPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const message = document.getElementById("passwordMessage");
 
+  message.className = "";
+  message.textContent = "";
+
+  if (!newPassword || !confirmPassword) {
+    message.className = "error";
+    message.textContent = "Please enter and confirm your password.";
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    message.className = "error";
+    message.textContent = "Password must be at least 6 characters.";
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    message.className = "error";
+    message.textContent = "Passwords do not match.";
+    return;
+  }
+
+  const accessToken =
+    currentSession?.access_token ||
+    localStorage.getItem("access_token");
+
+  if (!accessToken) {
+    message.className = "error";
+    message.textContent =
+      "Invitation session not found. Please open the invitation link again.";
+    return;
+  }
+
+  message.textContent = "Setting password...";
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/auth/v1/user`,
+      {
+        method: "PUT",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          password: newPassword
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.msg ||
+        data.message ||
+        data.error_description ||
+        "Unable to set password."
+      );
+    }
+
+    message.className = "success";
+    message.textContent = "Password created successfully.";
+
+    setTimeout(() => {
+      document.getElementById("setPasswordSection").style.display = "none";
+      showApp();
+    }, 1000);
+
+  } catch (error) {
+    message.className = "error";
+    message.textContent = error.message;
+  }
+}
 
 async function refreshSession() {
 
@@ -932,8 +1044,53 @@ document
 
 async function initializeApp() {
 
-  const valid =
-    await validateSession();
+  // Check if user arrived from a Supabase invitation link
+  const hashParams = new URLSearchParams(
+    window.location.hash.substring(1)
+  );
+
+  const inviteAccessToken = hashParams.get("access_token");
+  const inviteRefreshToken = hashParams.get("refresh_token");
+  const linkType = hashParams.get("type");
+
+  if (inviteAccessToken) {
+
+    localStorage.setItem(
+      "access_token",
+      inviteAccessToken
+    );
+
+    if (inviteRefreshToken) {
+      localStorage.setItem(
+        "refresh_token",
+        inviteRefreshToken
+      );
+    }
+
+    currentSession = {
+      access_token: inviteAccessToken,
+      refresh_token: inviteRefreshToken
+    };
+
+    // Remove tokens from browser address bar
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname
+    );
+
+    if (
+      linkType === "invite" ||
+      linkType === "recovery"
+    ) {
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("appSection").style.display = "none";
+      document.getElementById("setPasswordSection").style.display = "block";
+      return;
+    }
+  }
+
+  const valid = await validateSession();
 
   if (valid) {
     await showApp();
