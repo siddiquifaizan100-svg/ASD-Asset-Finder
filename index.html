@@ -375,14 +375,14 @@
           <option value="">Select Category</option>
         </select>
 
-        <label for="room">Room Number</label>
+        <label for="room">Location</label>
 
-        <input
-          id="room"
-          type="text"
-          placeholder="Enter room number"
-          autocomplete="off"
-        >
+<input
+  id="room"
+  type="text"
+  placeholder="Search room, area or location..."
+  autocomplete="off"
+>
 
         <button onclick="searchAssets()">
           Search Asset
@@ -894,7 +894,7 @@ async function searchAssets() {
 
     message.className = "error";
     message.textContent =
-      "Please enter a room number.";
+      "Please enter a location.";
 
     return;
   }
@@ -907,7 +907,7 @@ async function searchAssets() {
       `${SUPABASE_URL}/rest/v1/assets` +
       `?select=id,category,room_number,asset_type,result_1,result_2,result_3` +
       `&category=eq.${encodeURIComponent(category)}` +
-      `&room_number=ilike.${encodeURIComponent(room)}` +
+      `&room_number=ilike.${encodeURIComponent("*" + room + "*")}` +
       `&order=asset_type.asc`;
 
     const response =
